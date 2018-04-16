@@ -1,0 +1,241 @@
+
+This file is to include your testing documentation. The file is to be
+in plain text ASCII and properly spaced and edited so that when it is
+viewed on a Linux machine it is readable. Not all ASCII files created
+on a Windows machine display as expected due to the differences with
+respect to how new lines and carriage returns are treated. Line widths
+are to be limited to 80 characters.
+
+################################################################################
+TABLE OF CONTENTS
+################################################################################
+
+1. Prioritization and signals interrupting
+2. syssighandler() test case
+3. syskill() test case
+4. syssigwait() test case
+5. sysopen() with invalid arguments
+6. syswrite() with invalid file descriptor
+7. sysioctl() test for invalid commands
+8. sysread() when there are more characters buffered in kernel than the read
+	requests
+9. Signalling to a process waiting to recieve / send
+10.~~ADD~~
+--------------------------------------------------------------------
+
+1. Prioritization and signals interrupting
+
+i. Goal
+When multiple signals to the same process are sent, the highest one
+should be handled first, followed by the next highest and so forth.
+If the same signal is sent before the handler has started, it will
+be ignored. If a higher handler signal is being handled, the lower
+one should be queued.
+
+ii. Methodology
+We will then signal the process with the following signals:
+	25,27,29,29,28
+	we assume the output to be: 
+		"29"
+		"28"
+		"27"
+		"25"
+
+
+iii. Sample Output
+Creating sigTest
+Set 1
+29
+28
+27
+25
+
+[Test passed] 
+
+--------------------------------------------------------------------
+
+2. syssighandler() test case
+
+i. Goal
+When we attempt to add handlers to invalid locations, it should fail.
+When we attempt to add handlers to the reserved signal 31 it should
+fail. When we atempt to add handlers to valid locations (even repeat
+locations) it should succeed.
+
+ii. Methodology
+Call:
+syssighandler(31,&Handler29,&oldH)
+syssighandler(32,&Handler28,&oldH)
+syssighandler(-1,&Handler27,&oldH)
+syssighandler(5,&Handler26,&oldH)
+syssighandler(10,&Handler25,&oldH)
+syssighandler(10,&Handler24,&oldH)
+
+iii. Sample Output
+Creating sigTest
+Result of handler install: -1 | Expected: -1
+Result of handler install: -1 | Expected: -1
+Result of handler install: -1 | Expected: -1
+Result of handler install: 0 | Expected: 0
+Result of handler install: 0 | Expected: 0
+Result of handler install: 0 | Expected: 0
+
+[Test passed] 
+
+--------------------------------------------------------------------
+
+3. syskill() test case
+
+i. Goal
+Even if there are other signals queued to run, once signal 31 is
+sent, the other handlers shouldn't run since the program will end.
+
+ii. Methodology
+We will signal the process with the follwing signals:
+	25,27,29,31,28
+	we assume the output to be: 
+		Stopping process: 2
+	Since the other handlers shouldn't run.
+
+iii. Sample Output
+Creating sigTest
+Set 2
+Stopping process: 2
+[Test passed] 
+
+
+--------------------------------------------------------------------
+
+4. syssigwait() test case
+
+i. Goal
+When a process calls syssigwait(0), it should fail as it is the idle
+process; however, for all other valid processes, the calling process
+should wait for the process it's waiting for to end before resuming.
+
+ii. Methodology
+We have two functions:
+-runner is just an infinite for-loop
+-waiter announces that it's waiting on runner and then waits
+
+We create runner() first (so it's pid will be 2) and then we create
+waiter() which waits for pid 2. We wait 10 seconds before calling 
+syskill() on process 2. At this point, waiter() starts running again
+and announces that 2 has been killed.
+
+iii. Sample Output
+init devTab
+syswait test
+Waiting on 2
+Stopping process: 2
+2 killed
+Stopping process: 3
+
+[Test passed] 
+
+--------------------------------------------------------------------
+
+5. sysopen() with invalid arguments
+
+i. Goal
+Calling sysopen with an invalid device number should return -1
+
+ii. Methodology
+Since the keyboards occupy slot 0 and 1 on the device table,
+call sysopen(2);
+
+iii. Sample Output
+sysopen returned with value -1  
+
+[Test passed] 
+
+
+--------------------------------------------------------------------
+
+6. syswrite() with invalid file descriptor
+
+i. Goal
+Calling syswrite with an invalid file descriptor should return -1
+
+ii. Methodology
+Call syswrite with fd -1
+
+iii. Sample Output
+syswrite returned with value -1  
+
+[Test passed] 
+
+--------------------------------------------------------------------
+
+7. sysioctl() test for invalid commands
+
+i. Goal
+Calling ioctl with an invalid command number should return -1
+
+ii. Methodology
+Call ioctl with command=54 
+
+iii. Sample Output
+sysputs("In wrapper\n");
+
+[Test passed] 
+
+--------------------------------------------------------------------
+
+8. sysread() when there are more characters buffered in kernel than
+	the read requests
+
+i. Goal
+If one sysread does not use up all the chars in the keyboard buffer,
+the next sysread should read the values left on the buffer
+
+ii. Methodology
+Open keyboard, wait a bit. During the wait, type 3 characters (say, "abc")
+Sysread for 2 characters. Sysread should return immediately with "ab"
+Sysread for 2 more characters, typing "d" should return "cd"
+
+iii. Sample Output
+U: first sysread returns: ab 
+U: second sysread returns: cd 
+
+[Test passed] 
+--------------------------------------------------------------------
+
+9. Signalling to a process waiting to recieve / send
+
+i. Goal
+A process that is in a blocked sending state should return a -99
+upon being signaled. 
+
+ii. Methodology
+We will have a process that attempts to send and will have to block
+since there are no recievers. When it is signalled, it should return
+the value -99 and it's handler should run.
+
+iii. Sample Output
+Creating sigTest
+Result of handler install: 0 | Expected: 0
+Set 1
+Handler
+Result: -99 | Expected: -99
+
+[Test passed] 
+
+--------------------------------------------------------------------
+
+10.Typing backspace on sysread should not go past end of buffer
+
+i. Goal
+Typing backspace when sysread-ing should remove letters in existing buffer,
+but should not go past the start of the buffer
+
+ii. Methodology
+At sysread for 3 letters,, type "ab", then type backspace four times.
+Typing "cde" should make sysread return
+
+iii. Sample Output
+U: sysread returns: cde  
+
+[Test passed] 
+--------------------------------------------------------------------
+

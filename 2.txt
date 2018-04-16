@@ -1,0 +1,25 @@
+The 1024string is: "This is the number -17 when printed signed -17 unsigned 4294
+967279 hex ffffffef and a string Hello.
+      Sample printing of 1024 in signed 1024, unsigned 1024 and hex 400.
+
+"
+
+The formula is 1024 + -17 = 1007.
+
+
+This is the number -17 when printed signed -17 unsigned 4294967279 hex ffffffef
+and a string Hello.
+      Sample printing of 1024 in signed 1024, unsigned 1024 and hex 400.
+
+init devTab
+Creating sigTest
+Result of handler install: -1 | Expected: -1
+Result of handler install: -1 | Expected: -1
+Result of handler install: -1 | Expected: -1
+Result of handler install: 0 | Expected: 0
+Result of handler install: 0 | Expected: 0
+Result of handler install: 0 | Expected: 0
+Set 1
+Set 2
+Stopping process: 2
+ß

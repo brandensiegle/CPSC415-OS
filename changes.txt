@@ -1,0 +1,5 @@
+scancodesToAscii.txt
+
+- printf -> kprintf
+- constants to header file
+- caps lock enable, disable on down presses
